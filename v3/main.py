@@ -32,20 +32,14 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', 40)
 
-# Validation cases from "Rotational-translational failure mechanism of
-# multi-layered soil slopes using upper bound limit analysis".
-# Soil layers are keyed s1..s3 in the *code's* internal stratigraphic order,
-# i.e. s1 = deepest layer (height_span lower-bounded at -inf), s3 = shallowest
-# layer (height_span upper-bounded at +inf) -- see Case.create_blocks(). This
-# is the reverse of the "Top"/"Bottom" columns used in the paper's tables, so
-# the mapping below intentionally inverts that column order.
+# s1..s3 follow the code's internal height ordering (s1 deepest, s3 shallowest),
+# not the paper's Top/Bottom table columns.
 VALIDATION_CASES = {
     'case1_homogeneous': dict(
         description='Case 1: Homogeneous slope (baseline verification)',
         slope_angle_deg=45.0,
-        total_height=20.0,  # coordinate-domain size only; Hcrit is an output
+        total_height=20.0,
         layers=dict(
-            # Single material: split into three equal, identical sub-layers.
             s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
             s2=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
             s3=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=None),
@@ -57,11 +51,8 @@ VALIDATION_CASES = {
         slope_angle_deg=45.0,
         total_height=14.0,
         layers=dict(
-            # Weathered rock (bottom, H=9m) split across s1/s2 -- identical
-            # properties, so the split point is arbitrary.
             s1=dict(gamma=21.0, cohesion=40.0, phita_deg=38.0, thickness=4.5),
             s2=dict(gamma=21.0, cohesion=40.0, phita_deg=38.0, thickness=4.5),
-            # Soft clay (top, H=5m).
             s3=dict(gamma=18.0, cohesion=10.0, phita_deg=18.0, thickness=None),
         ),
         fem_reference=dict(deviation_pct=5.6, H1_over_H=0.36, phi_ratio=2.11),
@@ -71,11 +62,8 @@ VALIDATION_CASES = {
         slope_angle_deg=45.0,
         total_height=15.0,
         layers=dict(
-            # Stiff clay / weathered rock (bottom, H=8m).
             s1=dict(gamma=20.5, cohesion=25.0, phita_deg=28.0, thickness=8.0),
-            # Dense sand (middle, H=4m).
             s2=dict(gamma=19.0, cohesion=10.0, phita_deg=32.0, thickness=4.0),
-            # Soft clay / silt (top, H=3m).
             s3=dict(gamma=17.0, cohesion=5.0, phita_deg=20.0, thickness=None),
         ),
         fem_reference=dict(H_crit=13.7, F_S=1.280, H_crit_ub=13.9, F_S_ub=1.285,
@@ -422,18 +410,14 @@ class Case(BaseModel):
 
     @classmethod
     def from_trial(cls, trial: Trial | FixedTrial, config: dict) -> Self:
-        # Soil stratigraphy, layer thicknesses and slope angle come from a
-        # fixed validation-case profile (see VALIDATION_CASES) rather than
-        # being sampled, since these are given inputs in the benchmark cases;
-        # only the kinematic/geometric parameters below remain search variables.
         profile = config['soil_profile']
         layers = profile['layers']
         h_baseline = profile.get('h_baseline', 25.0)
         h_total = h_baseline + profile['total_height']
 
-        t1 = layers['s1']['thickness']  # bottom layer
+        t1 = layers['s1']['thickness']
         h1_upper = h_baseline + t1
-        t2 = layers['s2']['thickness']  # middle layer
+        t2 = layers['s2']['thickness']
         h2_upper = h1_upper + t2
         soil_params2 = Box({
             's1': dict(

@@ -1,3 +1,24 @@
+# UBLA
+
+Code accompanying "Rotational-translational failure mechanism of multi-layered
+soil slopes using upper bound limit analysis" (Mussabayeva, Moon, Satyanaga,
+Zhai, Adair, Kim; submitted to *Scientific Reports*). See `CITATION.cff` for
+citation details.
+
+The rotational-translational (log-spiral + translational block) mechanism and
+the TPE-based optimization procedure described in the manuscript are
+implemented in `v3/main.py`. The three benchmark cases from the manuscript
+(homogeneous slope, two-layer clay-rock slope, three-layer slope) are defined
+in `v3.main.VALIDATION_CASES` and can be run with:
+
+```shell
+python -m v3.main
+```
+
+which calls `run_validation_cases()` and reports the optimized critical
+height for each case against the finite-element (PLAXIS 2D) reference values
+reported in the manuscript.
+
 # Setup
 
 - Create Python virtual env using PyCharm.

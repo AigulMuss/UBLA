@@ -2,6 +2,7 @@ plxscripting~=1.0.4
 shapely~=2.0.4
 numpy~=1.26.4
 pandas~=2.2.2
+geopandas~=1.1.0
 more-itertools~=10.2.0
 setuptools
 

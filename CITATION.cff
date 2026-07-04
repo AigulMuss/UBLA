@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software (this record) and the associated article."
+title: "UBLA: Rotational-Translational Failure Mechanism of Multi-Layered Soil Slopes Using Upper Bound Limit Analysis"
+type: software
+authors:
+  - family-names: Mussabayeva
+    given-names: Aigul
+    affiliation: Nazarbayev University
+  - family-names: Moon
+    given-names: Sung-Woo
+    affiliation: Nazarbayev University
+  - family-names: Satyanaga
+    given-names: Alfrendo
+    affiliation: Nazarbayev University
+  - family-names: Zhai
+    given-names: Qian
+    affiliation: Southeast University
+  - family-names: Adair
+    given-names: Desmond
+    affiliation: "Queen's University Belfast"
+  - family-names: Kim
+    given-names: Jong
+    affiliation: Nazarbayev University
+    email: jong.kim@nu.edu.kz
+repository-code: "https://github.com/AigulMuss/UBLA"
+keywords:
+  - upper bound limit analysis
+  - rotational-translational mechanism
+  - slope stability
+  - logarithmic spiral
+  - finite element validation
+preferred-citation:
+  type: article
+  title: "Rotational-translational failure mechanism of multi-layered soil slopes using upper bound limit analysis"
+  authors:
+    - family-names: Mussabayeva
+      given-names: Aigul
+    - family-names: Moon
+      given-names: Sung-Woo
+    - family-names: Satyanaga
+      given-names: Alfrendo
+    - family-names: Zhai
+      given-names: Qian
+    - family-names: Adair
+      given-names: Desmond
+    - family-names: Kim
+      given-names: Jong
+  journal: "Scientific Reports"
+  status: submitted
