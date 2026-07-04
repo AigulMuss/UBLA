@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite both the software (this record) and the associated article."
 title: "UBLA: Rotational-Translational Failure Mechanism of Multi-Layered Soil Slopes Using Upper Bound Limit Analysis"
 type: software
+license: MIT
 authors:
   - family-names: Mussabayeva
     given-names: Aigul
