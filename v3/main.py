@@ -32,6 +32,57 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', 40)
 
+# Validation cases from "Rotational-translational failure mechanism of
+# multi-layered soil slopes using upper bound limit analysis".
+# Soil layers are keyed s1..s3 in the *code's* internal stratigraphic order,
+# i.e. s1 = deepest layer (height_span lower-bounded at -inf), s3 = shallowest
+# layer (height_span upper-bounded at +inf) -- see Case.create_blocks(). This
+# is the reverse of the "Top"/"Bottom" columns used in the paper's tables, so
+# the mapping below intentionally inverts that column order.
+VALIDATION_CASES = {
+    'case1_homogeneous': dict(
+        description='Case 1: Homogeneous slope (baseline verification)',
+        slope_angle_deg=45.0,
+        total_height=20.0,  # coordinate-domain size only; Hcrit is an output
+        layers=dict(
+            # Single material: split into three equal, identical sub-layers.
+            s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
+            s2=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
+            s3=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=None),
+        ),
+        fem_reference=dict(F_S=1.46, F_S_UB=1.49, deviation_pct=1.9),
+    ),
+    'case2_clay_rock': dict(
+        description='Case 2: Two-layer clay-rock slope (Table 1)',
+        slope_angle_deg=45.0,
+        total_height=14.0,
+        layers=dict(
+            # Weathered rock (bottom, H=9m) split across s1/s2 -- identical
+            # properties, so the split point is arbitrary.
+            s1=dict(gamma=21.0, cohesion=40.0, phita_deg=38.0, thickness=4.5),
+            s2=dict(gamma=21.0, cohesion=40.0, phita_deg=38.0, thickness=4.5),
+            # Soft clay (top, H=5m).
+            s3=dict(gamma=18.0, cohesion=10.0, phita_deg=18.0, thickness=None),
+        ),
+        fem_reference=dict(deviation_pct=5.6, H1_over_H=0.36, phi_ratio=2.11),
+    ),
+    'case3_three_layer': dict(
+        description='Case 3: Three-layer multi-layered slope (Table 2)',
+        slope_angle_deg=45.0,
+        total_height=15.0,
+        layers=dict(
+            # Stiff clay / weathered rock (bottom, H=8m).
+            s1=dict(gamma=20.5, cohesion=25.0, phita_deg=28.0, thickness=8.0),
+            # Dense sand (middle, H=4m).
+            s2=dict(gamma=19.0, cohesion=10.0, phita_deg=32.0, thickness=4.0),
+            # Soft clay / silt (top, H=3m).
+            s3=dict(gamma=17.0, cohesion=5.0, phita_deg=20.0, thickness=None),
+        ),
+        fem_reference=dict(H_crit=13.7, F_S=1.280, H_crit_ub=13.9, F_S_ub=1.285,
+                           deviation_pct=1.3),
+    ),
+}
+
 
 class Surface(SurfaceV2):
     soil_params: Box
@@ -371,38 +422,43 @@ class Case(BaseModel):
 
     @classmethod
     def from_trial(cls, trial: Trial | FixedTrial, config: dict) -> Self:
-        h_baseline = 25
-        h_total = 40
-        # Suggest relative thicknesses
-        t1 = trial.suggest_float('thickness_s1', 1, 10)  # bottom layer
+        # Soil stratigraphy, layer thicknesses and slope angle come from a
+        # fixed validation-case profile (see VALIDATION_CASES) rather than
+        # being sampled, since these are given inputs in the benchmark cases;
+        # only the kinematic/geometric parameters below remain search variables.
+        profile = config['soil_profile']
+        layers = profile['layers']
+        h_baseline = profile.get('h_baseline', 25.0)
+        h_total = h_baseline + profile['total_height']
+
+        t1 = layers['s1']['thickness']  # bottom layer
         h1_upper = h_baseline + t1
-        t2 = trial.suggest_float('thickness_s2', 1, h_total - h1_upper - 1)  # middle layer
+        t2 = layers['s2']['thickness']  # middle layer
         h2_upper = h1_upper + t2
-        t3 = h_total - h2_upper  # top layer (calculated)
         soil_params2 = Box({
             's1': dict(
-                gamma=5,
-                cohesion=trial.suggest_float('cohesion_s1', 5, 30),
-                phita=np.deg2rad(20),
+                gamma=layers['s1']['gamma'],
+                cohesion=layers['s1']['cohesion'],
+                phita=np.deg2rad(layers['s1']['phita_deg']),
                 height_span=[None, h1_upper],
             ),
             's2': dict(
-                gamma=19,
-                cohesion=10,
-                phita=np.deg2rad(32),
+                gamma=layers['s2']['gamma'],
+                cohesion=layers['s2']['cohesion'],
+                phita=np.deg2rad(layers['s2']['phita_deg']),
                 height_span=[h1_upper, h2_upper],
             ),
             's3': dict(
-                gamma=20.5,
-                cohesion=25,
-                phita=np.deg2rad(28),
+                gamma=layers['s3']['gamma'],
+                cohesion=layers['s3']['cohesion'],
+                phita=np.deg2rad(layers['s3']['phita_deg']),
                 height_span=[h2_upper, None],
             ),
         })
         surface = Surface(
             elev_bottom=h_baseline,
             elev_top=h_total,
-            slope_angle=np.deg2rad(trial.suggest_float('slope_angle', 15, 40)),
+            slope_angle=np.deg2rad(profile['slope_angle_deg']),
             x_offset=150,
             soil_params=soil_params2,
 
@@ -426,8 +482,9 @@ class Case(BaseModel):
                 'third': shg.Point(-5, 15),
             },
         )
-        case.origins['first'] = _suggest_origin(1, [-15, 15], [25, 100])
-        case.origins['third'] = _suggest_origin(1, [-15, 15], [25, 100])
+        origin_y_span = [h_baseline, h_total + 60]
+        case.origins['first'] = _suggest_origin(1, [-15, 15], origin_y_span)
+        case.origins['third'] = _suggest_origin(3, [-15, 15], origin_y_span)
         ratio1 = trial.suggest_float('normal_ratio_1', 0.2, 0.5)
         ratio2 = trial.suggest_float('normal_ratio_2', 0.55, 0.8)
         case.set_normals(ratios=[ratio1, ratio2])
@@ -622,6 +679,41 @@ def test_case(configs):
     case.plot()
 
 
+def run_validation_cases(n_trials: int = 100):
+    """Run the three benchmark cases from the manuscript (homogeneous slope,
+    two-layer clay-rock slope, three-layer slope) and report the resulting
+    critical height against the FEM (PLAXIS 2D) reference values."""
+    base_config = dict(
+        partition_1_type='LinearCurve',
+        partition_2_type='LinearCurve',
+        curve_2_type='LinearCurve',
+        same_origins=False,
+    )
+    results = {}
+    for case_name, profile in VALIDATION_CASES.items():
+        logger.info("Running validation case: {}", profile['description'])
+        optimizer = Optimizer(
+            config=base_config | dict(soil_profile=profile),
+            sampler=optuna.samplers.TPESampler(n_startup_trials=100, seed=369),
+            n_trials=n_trials,
+            n_jobs=1,
+        )
+        case_study = optimizer.run()
+        best_trial = case_study.best_trial
+        h_critical = best_trial.user_attrs.get('h_critical')
+        logger.info(
+            "{}: H_crit={:.2f} m, penalty={:.4g}, FEM reference={}",
+            case_name, h_critical, case_study.best_value, profile['fem_reference'],
+        )
+        results[case_name] = dict(
+            h_critical=h_critical,
+            penalty=case_study.best_value,
+            best_params=case_study.best_params,
+            fem_reference=profile['fem_reference'],
+        )
+    return results
+
+
 def main():
     config_idx = 0
     configs = [
@@ -631,6 +723,7 @@ def main():
             partition_2_type='LinearCurve',
             curve_2_type='LinearCurve',
             same_origins=False,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
         # Case 1: same origins
         dict(
@@ -638,6 +731,7 @@ def main():
             partition_2_type='LinearCurve',
             curve_2_type='LinearCurve',
             same_origins=True,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
         # Case 2: different origins
         dict(
@@ -645,6 +739,7 @@ def main():
             partition_2_type='LinearCurve',
             curve_2_type='LogSpiralCurve',
             same_origins=False,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
         # Case 3: different origins
         dict(
@@ -652,6 +747,7 @@ def main():
             partition_2_type='PolynomialCurve',
             curve_2_type='LinearCurve',
             same_origins=False,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
         # Case 3: same origins
         dict(
@@ -659,6 +755,7 @@ def main():
             partition_2_type='PolynomialCurve',
             curve_2_type='LinearCurve',
             same_origins=True,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
         # Case 4: different origins
         dict(
@@ -666,6 +763,7 @@ def main():
             partition_2_type='PolynomialCurve',
             curve_2_type='LogSpiralCurve',
             same_origins=False,
+            soil_profile=VALIDATION_CASES['case3_three_layer'],
         ),
     ]
     # trial = FixedTrial(
@@ -717,4 +815,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_validation_cases()
+    # main()  # partition/kinematic-mode ablation study (Table 5)
