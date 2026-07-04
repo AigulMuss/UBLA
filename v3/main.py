@@ -59,7 +59,7 @@ VALIDATION_CASES = {
     ),
     'case3_three_layer': dict(
         description='Case 3: Three-layer multi-layered slope (Table 2)',
-        slope_angle_deg=45.0,
+        slope_angle_deg=30.0,
         total_height=15.0,
         layers=dict(
             s1=dict(gamma=20.5, cohesion=25.0, phita_deg=28.0, thickness=8.0),
