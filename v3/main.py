@@ -343,15 +343,13 @@ class Case(BaseModel):
         return self.external_work
 
     def get_h_critical(self):
-        lower_curve = self.failure_curves[0]
-        y_min = get_line_xy(lower_curve.line)[:, 1].min()
-        # logger.debug("y_min:\n{}", y_min)
-        upper_curve = self.failure_curves[-1]
-        y_max = get_line_xy(upper_curve.line)[:, 1].max()
-        # logger.debug("y_max:\n{}", y_max)
-        h_critical = y_max - y_min
-        # logger.debug("h_critical:\n{}", h_critical)
-        return h_critical
+        # D scales with H one power lower than W (D ~ c*L*v with L~H; W ~
+        # gamma*A*v with A~H^2, for the same velocity field), so for any
+        # fixed mechanism shape the height at which D=W exactly - the
+        # critical height, Eq. 24 - is the modeled height scaled by D/W,
+        # not the vertical span of the failure curves at the modeled height.
+        h_modeled = self.surface.elev_top - self.surface.elev_bottom
+        return h_modeled * self.energy_dissipation / self.external_work
 
     def plot(self, show: bool = True):
         # self.blocks.pop('a')
