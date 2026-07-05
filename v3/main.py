@@ -54,7 +54,13 @@ VALIDATION_CASES = {
     ),
     'case2_clay_rock': dict(
         description='Case 2: Two-layer clay-rock slope (Table 1)',
-        slope_angle_deg=45.0,
+        # Estimated at ~30 deg from PLAXIS Output screenshots (toe/crest read
+        # off the axis gridlines: toe ~(24, 0), crest ~(48-50, 14-15) ->
+        # H~14-15 m matching this table, angle ~28-32 deg). Less precise than
+        # the exact stress-point export used to confirm Case 3's 30 deg, but
+        # the same value, from an independent case - treat as provisional
+        # pending a raw numeric export for this case.
+        slope_angle_deg=30.0,
         total_height=14.0,
         partition_type='PolynomialCurve',
         layers=dict(
