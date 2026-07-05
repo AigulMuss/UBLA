@@ -37,8 +37,15 @@ pd.set_option('display.max_colwidth', 40)
 VALIDATION_CASES = {
     'case1_homogeneous': dict(
         description='Case 1: Homogeneous slope (baseline verification)',
-        slope_angle_deg=45.0,
-        total_height=20.0,
+        # Estimated at ~30 deg / H~14.5 m from PLAXIS Output screenshots
+        # (project "Validation2"): toe ~(24, 0), crest ~(49, 14.5) read off
+        # the axis gridlines, and the crest sits well clear of the plot's
+        # y=16 ceiling, which is hard to reconcile with the previous H=20 m
+        # assumption. Screenshot-based, not an exact numeric export - same
+        # caveat as case2_clay_rock below. Rounded to a clean 15 m pending a
+        # numeric export to pin this down further.
+        slope_angle_deg=30.0,
+        total_height=15.0,
         # Linear partitions converge markedly better here (~1.7% D/W imbalance
         # vs ~17% with polynomial partitions at the same trial budget): with a
         # single material, curved partitions add search freedom with no
@@ -46,20 +53,24 @@ VALIDATION_CASES = {
         # to the true critical mechanism.
         partition_type='LinearCurve',
         layers=dict(
-            s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
-            s2=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=20.0 / 3),
+            s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=15.0 / 3),
+            s2=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=15.0 / 3),
             s3=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=None),
         ),
         fem_reference=dict(F_S=1.46, F_S_UB=1.49, deviation_pct=1.9),
     ),
     'case2_clay_rock': dict(
         description='Case 2: Two-layer clay-rock slope (Table 1)',
-        # Estimated at ~30 deg from PLAXIS Output screenshots (toe/crest read
-        # off the axis gridlines: toe ~(24, 0), crest ~(48-50, 14-15) ->
-        # H~14-15 m matching this table, angle ~28-32 deg). Less precise than
-        # the exact stress-point export used to confirm Case 3's 30 deg, but
-        # the same value, from an independent case - treat as provisional
-        # pending a raw numeric export for this case.
+        # Set to 30 deg on the strength of Case 1 and Case 3 both
+        # independently reading ~30 deg from their own PLAXIS screenshots/
+        # exports (see case1_homogeneous and case3_three_layer below),
+        # suggesting a common validation geometry rather than the 45 deg
+        # used for the later parametric sweep. NOT yet confirmed from Case
+        # 2's own data directly: the screenshot originally used to justify
+        # this value ("Validation_2 layer") was misread and actually shows
+        # different toe/crest coordinates than reported here - treat this as
+        # more provisional than the Case 1/3 values until Case 2's own
+        # export or screenshot is re-checked.
         slope_angle_deg=30.0,
         total_height=14.0,
         partition_type='PolynomialCurve',
