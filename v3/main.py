@@ -32,25 +32,10 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', 40)
 
-# s1..s3 follow the code's internal height ordering (s1 deepest, s3 shallowest),
-# not the paper's Top/Bottom table columns.
+# s1..s3 follow the code's internal height ordering (s1 deepest, s3 shallowest).
 VALIDATION_CASES = {
     'case1_homogeneous': dict(
         description='Case 1: Homogeneous slope (baseline verification)',
-        # Estimated at ~30 deg / H~14.5 m from PLAXIS Output screenshots
-        # (project "Validation2"): toe ~(24, 0), crest ~(49, 14.5) read off
-        # the axis gridlines, and the crest sits well clear of the plot's
-        # y=16 ceiling, which is hard to reconcile with the previous H=20 m
-        # assumption. Screenshot-based, not an exact numeric export - same
-        # caveat as case2_clay_rock below. Rounded to a clean 15 m pending a
-        # numeric export to pin this down further.
-        slope_angle_deg=30.0,
-        total_height=15.0,
-        # Linear partitions converge markedly better here (~1.7% D/W imbalance
-        # vs ~17% with polynomial partitions at the same trial budget): with a
-        # single material, curved partitions add search freedom with no
-        # energetic benefit, so the simpler family is both faster and closer
-        # to the true critical mechanism.
         partition_type='LinearCurve',
         layers=dict(
             s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=15.0 / 3),
@@ -61,14 +46,6 @@ VALIDATION_CASES = {
     ),
     'case2_clay_rock': dict(
         description='Case 2: Two-layer clay-rock slope (Table 1)',
-        # Confirmed from the correct "Validation_2 layer" PLAXIS screenshots:
-        # toe ~(24, 0), crest ~(48, 14.5) -> ~31 deg and H~14.5 m, matching
-        # this table's 14 m closely. Consistent with Case 1 and Case 3 also
-        # independently reading ~30 deg. The same screenshots show the
-        # displacement vectors and strain concentration confined to the thin
-        # top layer near the crest, never reaching the toe or the lower
-        # layer - direct visual confirmation of the manuscript's "shallow
-        # failure confined to the weak upper layer" claim for this case.
         slope_angle_deg=30.0,
         total_height=14.0,
         partition_type='PolynomialCurve',
@@ -81,11 +58,6 @@ VALIDATION_CASES = {
     ),
     'case3_three_layer': dict(
         description='Case 3: Three-layer multi-layered slope (Table 2)',
-        # Verified against the raw PLAXIS stress-point export (Phase 1, step
-        # 1100): reconstructing the ground surface from the stress-point
-        # cloud gives a slope face at ~30 deg, not 45 deg. Layer thicknesses
-        # measured from the same export (2.85/3.84/7.88 m) match this table's
-        # 3/4/8 m closely, confirming the FEM run corresponds to this case.
         slope_angle_deg=30.0,
         total_height=15.0,
         # Polynomial partitions give a closer H_critical match to the FEM
@@ -696,13 +668,7 @@ def test_case(configs):
 
 def run_validation_cases(n_trials: int = 500, n_startup_trials: int = 200):
     """Run the three benchmark cases from the manuscript (homogeneous slope,
-    two-layer clay-rock slope, three-layer slope) and report the resulting
-    critical height against the FEM (PLAXIS 2D) reference values.
-
-    Defaults match the manuscript's stated optimization budget (ntrials=500,
-    nstartup=200). Each case uses the partition curve family
-    (VALIDATION_CASES[...]['partition_type']) found to converge best for
-    that case's layering.
+    two-layer clay-rock slope, three-layer slope).
     """
     results = {}
     for case_name, profile in VALIDATION_CASES.items():
