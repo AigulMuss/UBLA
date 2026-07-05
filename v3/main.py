@@ -61,16 +61,14 @@ VALIDATION_CASES = {
     ),
     'case2_clay_rock': dict(
         description='Case 2: Two-layer clay-rock slope (Table 1)',
-        # Set to 30 deg on the strength of Case 1 and Case 3 both
-        # independently reading ~30 deg from their own PLAXIS screenshots/
-        # exports (see case1_homogeneous and case3_three_layer below),
-        # suggesting a common validation geometry rather than the 45 deg
-        # used for the later parametric sweep. NOT yet confirmed from Case
-        # 2's own data directly: the screenshot originally used to justify
-        # this value ("Validation_2 layer") was misread and actually shows
-        # different toe/crest coordinates than reported here - treat this as
-        # more provisional than the Case 1/3 values until Case 2's own
-        # export or screenshot is re-checked.
+        # Confirmed from the correct "Validation_2 layer" PLAXIS screenshots:
+        # toe ~(24, 0), crest ~(48, 14.5) -> ~31 deg and H~14.5 m, matching
+        # this table's 14 m closely. Consistent with Case 1 and Case 3 also
+        # independently reading ~30 deg. The same screenshots show the
+        # displacement vectors and strain concentration confined to the thin
+        # top layer near the crest, never reaching the toe or the lower
+        # layer - direct visual confirmation of the manuscript's "shallow
+        # failure confined to the weak upper layer" claim for this case.
         slope_angle_deg=30.0,
         total_height=14.0,
         partition_type='PolynomialCurve',
