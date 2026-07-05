@@ -47,8 +47,16 @@ or the numbers in Table 3.
 - `v3/main.py` - the current mechanism, `VALIDATION_CASES`, `Case`,
   `Optimizer`, and `run_validation_cases()`. This is what the manuscript
   describes and what a reviewer should run to check Figures 7-9 and Table 3.
-- `lem/`, `scripts/` - auxiliary limit-equilibrium and development scripts,
-  not required for the validation cases above.
+- `scripts/kinematic_validation.py` - demonstrates the R-T-R kinematics
+  directly in the PLAXIS results: parses a "Table of incremental
+  displacements" export, extracts the moving mass, and prints the mean
+  displacement direction across the slope (continuous rotation at toe and
+  crest with a constant face-parallel band between them). Optionally takes
+  the principal-strains export to verify the model's slope angle. Requires
+  only numpy/pandas; the PLAXIS .TXT exports themselves are not archived
+  here.
+- `lem/`, remaining `scripts/` - auxiliary limit-equilibrium and development
+  scripts, not required for the validation cases above.
 
 ## Driving PLAXIS directly
 
