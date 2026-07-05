@@ -36,6 +36,8 @@ pd.set_option('display.max_colwidth', 40)
 VALIDATION_CASES = {
     'case1_homogeneous': dict(
         description='Case 1: Homogeneous slope (baseline verification)',
+        slope_angle_deg=30.0,
+        total_height=15.0,
         partition_type='LinearCurve',
         layers=dict(
             s1=dict(gamma=19.0, cohesion=15.0, phita_deg=30.0, thickness=15.0 / 3),
